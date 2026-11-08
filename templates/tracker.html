@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% set active_page = "tracker" %}
+
+{% block title %}Order Tracker — Airtel Project Udyam Digital{% endblock %}
+{% block page_title %}Order Tracker{% endblock %}
+{% block page_subtitle %}Real-time order & delivery status · WhatsApp/SMS notifications{% endblock %}
+
+{% block header_actions %}
+<input type="text" class="form-control" id="order-search" placeholder="Enter Order ID…" style="width:260px;padding:7px 12px;font-size:13px;"/>
+<button class="btn btn-primary btn-sm" onclick="lookupOrder()"><i class="fas fa-search"></i> Track</button>
+{% endblock %}
+
+{% block extra_styles %}
+.tracker-layout { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+.milestone-track { padding: 24px; }
+.milestone {
+  display: flex;
+  gap: 20px;
+  position: relative;
+  padding-bottom: 32px;
+}
+.milestone:last-child { padding-bottom: 0; }
+.milestone::before {
+  content: '';
+  position: absolute;
+  left: 19px;
+  top: 44px;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+.milestone.completed::before { background: var(--airtel-green); }
+.milestone.in-progress::before { background: linear-gradient(to bottom, var(--airtel-green) 0%, var(--border) 100%); }
+.milestone:last-child::before { display: none; }
+.milestone-icon {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.milestone-icon.completed { background: var(--airtel-green); color: white; }
+.milestone-icon.in-progress { background: var(--airtel-blue); color: white; animation: pulse 2s infinite; }
+.milestone-icon.pending { background: var(--border); color: var(--text-muted); }
+.milestone-body { flex: 1; padding-top: 6px; }
+.milestone-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+.milestone-time { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+.milestone-detail { font-size: 13px; color: var(--text-secondary); }
+
+.order-summary-card { background: white; border-radius: var(--radius-md); border: 1px solid var(--border); overflow: hidden; }
+.order-id-badge {
+  background: var(--airtel-navy);
+  color: white;
+  padding: 16px 20px;
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.notif-feed { padding: 16px; }
+.notif-item {
+  display: flex;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.notif-channel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+.notif-channel.wa { color: #25D366; }
+.notif-channel.sms { color: var(--airtel-blue); }
+.notif-msg { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; }
+.notif-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.progress-steps {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  background: rgba(0,166,81,0.04);
+  border-top: 1px solid var(--border);
+}
+.prog-step { text-align: center; flex: 1; }
+.prog-num { font-size: 20px; font-weight: 800; color: var(--airtel-green); }
+.prog-label { font-size: 11px; color: var(--text-muted); }
+{% endblock %}
+
+{% block content %}
+<div id="default-order-msg" class="alert alert-info mb-6" style="display:none;">
+  <i class="fas fa-info-circle"></i>
+  <div>Enter an order ID above to track, or <strong>place an order</strong> from <a href="/quote" style="color:var(--airtel-blue);font-weight:700;">Quote Builder</a> to get a live tracking ID.</div>
+</div>
+
+<div class="tracker-layout" id="tracker-content">
+  <!-- MILESTONES -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon icon-green"><i class="fas fa-route"></i></div>
+      <div>
+        <h3 id="order-title">Loading Order…</h3>
+        <p id="order-subtitle">Fetching status…</p>
+      </div>
+      <span class="badge badge-info" id="order-status-badge">In Progress</span>
+    </div>
+    <div class="milestone-track" id="milestone-track">
+      <div class="loading-overlay show"><div class="spinner"></div> Loading milestones…</div>
+    </div>
+    <div class="progress-steps" id="progress-bar-row" style="display:none;">
+      <div class="prog-step"><div class="prog-num" id="prog-complete">0</div><div class="prog-label">Completed</div></div>
+      <div class="prog-step"><div class="prog-num" id="prog-inprog" style="color:var(--airtel-blue);">0</div><div class="prog-label">In Progress</div></div>
+      <div class="prog-step"><div class="prog-num" id="prog-pend" style="color:var(--text-muted);">0</div><div class="prog-label">Remaining</div></div>
+    </div>
+  </div>
+
+  <!-- ORDER SUMMARY + NOTIFICATIONS -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+    <div class="order-summary-card">
+      <div class="order-id-badge" id="order-id-display">AIRTEL-UDYAM-DEMO</div>
+      <div style="padding:16px;">
+        <div class="info-row" style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid var(--border);"><span style="color:var(--text-secondary);">Business</span><span id="track-biz" style="font-weight:600;">—</span></div>
+        <div class="info-row" style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid var(--border);"><span style="color:var(--text-secondary);">Bundle</span><span id="track-bundle" style="font-weight:600;">—</span></div>
+        <div class="info-row" style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid var(--border);"><span style="color:var(--text-secondary);">Monthly</span><span id="track-price" style="font-weight:600;color:var(--airtel-red);">—</span></div>
+        <div class="info-row" style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid var(--border);"><span style="color:var(--text-secondary);">City</span><span id="track-city" style="font-weight:600;">—</span></div>
+        <div class="info-row" style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;"><span style="color:var(--text-secondary);">Activation</span><span id="track-eta" style="font-weight:600;color:var(--airtel-green);">—</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-green"><i class="fas fa-bell"></i></div>
+        <div><h3>Notifications</h3><p>WhatsApp & SMS feed</p></div>
+      </div>
+      <div class="notif-feed" id="notif-feed">
+        <div class="loading-overlay show"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const DEFAULT_ORDER = 'AIRTEL-UDYAM-DEMO';
+
+async function loadOrder(orderId) {
+  try {
+    const r = await fetch('/api/orders/'+orderId);
+    const data = await r.json();
+    renderOrder(data);
+  } catch(e) {
+    showToast('Could not load order: ' + orderId, 'error');
+  }
+}
+
+function renderOrder(data) {
+  document.getElementById('order-title').textContent = data.business_name || 'Business Order';
+  document.getElementById('order-subtitle').textContent = 'Order ID: ' + data.order_id;
+  document.getElementById('order-id-display').textContent = data.order_id;
+  document.getElementById('order-status-badge').textContent = data.status || 'In Progress';
+  document.getElementById('track-biz').textContent = data.business_name || '—';
+  document.getElementById('track-bundle').textContent = (data.bundle_title||'').substring(0,30)+'…' || '—';
+  document.getElementById('track-price').textContent = data.monthly_inr ? '₹'+data.monthly_inr.toLocaleString()+'/mo' : '—';
+  document.getElementById('track-city').textContent = data.city || '—';
+  document.getElementById('track-eta').textContent = data.estimated_activation_date || '—';
+
+  const milestones = data.milestones || [];
+  const track = document.getElementById('milestone-track');
+  track.innerHTML = '';
+  let completed=0, inprog=0, pending=0;
+  milestones.forEach(m => {
+    const status = (m.status||'').toLowerCase();
+    if(status.includes('completed')) completed++;
+    else if(status.includes('progress')) inprog++;
+    else pending++;
+    const cls = status.includes('completed') ? 'completed' : status.includes('progress') ? 'in-progress' : 'pending';
+    const icon = status.includes('completed') ? 'fa-check' : status.includes('progress') ? 'fa-spinner fa-spin' : 'fa-clock';
+    const div = document.createElement('div');
+    div.className = 'milestone ' + cls;
+    div.innerHTML = `<div class="milestone-icon ${cls}"><i class="fas ${icon}"></i></div>
+      <div class="milestone-body">
+        <div class="milestone-title">${m.title}</div>
+        <div class="milestone-time"><i class="fas fa-clock" style="font-size:10px;"></i> ${m.time||'—'}</div>
+        <div class="milestone-detail">${m.detail||''}</div>
+      </div>`;
+    track.appendChild(div);
+  });
+  document.getElementById('prog-complete').textContent = completed;
+  document.getElementById('prog-inprog').textContent = inprog;
+  document.getElementById('prog-pend').textContent = pending;
+  document.getElementById('progress-bar-row').style.display='flex';
+
+  const notifs = data.notifications || [];
+  const feed = document.getElementById('notif-feed');
+  feed.innerHTML = '';
+  notifs.forEach(n => {
+    const isWA = (n.channel||'').toLowerCase().includes('whatsapp');
+    const div = document.createElement('div');
+    div.className = 'notif-item';
+    div.innerHTML = `<div class="notif-icon">${isWA?'💬':'📱'}</div>
+      <div>
+        <div class="notif-channel ${isWA?'wa':'sms'}">${n.channel}</div>
+        <div class="notif-msg">${n.message}</div>
+        <div class="notif-time">${n.time||''}</div>
+      </div>`;
+    feed.appendChild(div);
+  });
+}
+
+function lookupOrder() {
+  const id = document.getElementById('order-search').value.trim();
+  if(!id) return showToast('Enter an order ID', 'warning');
+  loadOrder(id);
+}
+
+document.getElementById('order-search').addEventListener('keydown', e => {
+  if(e.key==='Enter') lookupOrder();
+});
+
+// Check URL params
+const urlParams = new URLSearchParams(window.location.search);
+const orderId = urlParams.get('order') || DEFAULT_ORDER;
+if(orderId !== DEFAULT_ORDER) {
+  document.getElementById('order-search').value = orderId;
+}
+loadOrder(orderId);
+</script>
+{% endblock %}

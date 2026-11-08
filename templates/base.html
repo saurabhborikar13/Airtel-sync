@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Airtel Project Udyam Digital{% endblock %}</title>
+  <link rel="icon" type="image/png" href="/static/images/airtel_logo.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    :root {
+      --airtel-red: #E40000;
+      --airtel-red-dark: #B30000;
+      --airtel-red-light: #FF3333;
+      --airtel-navy: #1A1A24;
+      --airtel-navy-light: #252535;
+      --airtel-gold: #F5A623;
+      --airtel-green: #00A651;
+      --airtel-blue: #0070C0;
+      --sidebar-width: 240px;
+      --header-height: 64px;
+      --bg: #F4F6FA;
+      --card-bg: #FFFFFF;
+      --text-primary: #1A1A24;
+      --text-secondary: #5A5A7A;
+      --text-muted: #9A9AB0;
+      --border: #E0E4EF;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.14);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--airtel-navy);
+      height: 100vh;
+      position: fixed;
+      left: 0; top: 0;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      transition: transform 0.3s ease;
+    }
+    .sidebar-logo {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .logo-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--airtel-red);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 800;
+      color: white;
+    }
+    .logo-text { color: white; }
+    .logo-text .brand { font-size: 15px; font-weight: 700; letter-spacing: 0.5px; }
+    .logo-text .product { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.5); letter-spacing: 1px; text-transform: uppercase; }
+    .sidebar-nav {
+      flex: 1;
+      padding: 16px 12px;
+      overflow-y: auto;
+    }
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: rgba(255,255,255,0.3);
+      padding: 8px 8px 6px;
+      margin-top: 8px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      color: rgba(255,255,255,0.65);
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 500;
+      margin-bottom: 2px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .nav-item:hover {
+      background: rgba(255,255,255,0.08);
+      color: white;
+    }
+    .nav-item.active {
+      background: var(--airtel-red);
+      color: white;
+      font-weight: 600;
+    }
+    .nav-item i { width: 18px; text-align: center; font-size: 14px; }
+    .nav-badge {
+      margin-left: auto;
+      background: var(--airtel-gold);
+      color: var(--airtel-navy);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 20px;
+    }
+    .sidebar-footer {
+      padding: 16px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 11px;
+      color: rgba(255,255,255,0.3);
+      text-align: center;
+    }
+    .sidebar-footer span { color: var(--airtel-red); font-weight: 600; }
+
+    /* ===== MAIN CONTENT ===== */
+    .main-content {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ===== TOP HEADER ===== */
+    .top-header {
+      height: var(--header-height);
+      background: white;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      gap: 16px;
+    }
+    .header-title {
+      flex: 1;
+    }
+    .header-title h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .header-title p {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .btn-primary {
+      background: var(--airtel-red);
+      color: white;
+    }
+    .btn-primary:hover { background: var(--airtel-red-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .btn-secondary {
+      background: white;
+      color: var(--text-primary);
+      border: 1.5px solid var(--border);
+    }
+    .btn-secondary:hover { background: var(--bg); border-color: var(--airtel-red); color: var(--airtel-red); }
+    .btn-success { background: var(--airtel-green); color: white; }
+    .btn-success:hover { background: #008040; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-lg { padding: 12px 24px; font-size: 15px; }
+
+    .avatar {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--airtel-red), var(--airtel-red-dark));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    /* ===== PAGE CONTENT ===== */
+    .page-content {
+      flex: 1;
+      padding: 28px;
+    }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-header h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      flex: 1;
+    }
+    .card-header p {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    .card-body { padding: 24px; }
+    .card-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .icon-red { background: rgba(228,0,0,0.1); color: var(--airtel-red); }
+    .icon-green { background: rgba(0,166,81,0.1); color: var(--airtel-green); }
+    .icon-blue { background: rgba(0,112,192,0.1); color: var(--airtel-blue); }
+    .icon-gold { background: rgba(245,166,35,0.1); color: var(--airtel-gold); }
+    .icon-navy { background: rgba(26,26,36,0.08); color: var(--airtel-navy); }
+
+    /* ===== STAT CARDS ===== */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      padding: 20px 24px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--airtel-red);
+    }
+    .stat-card.green::before { background: var(--airtel-green); }
+    .stat-card.blue::before { background: var(--airtel-blue); }
+    .stat-card.gold::before { background: var(--airtel-gold); }
+    .stat-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 28px; font-weight: 800; color: var(--text-primary); margin: 6px 0 2px; }
+    .stat-sub { font-size: 12px; color: var(--text-muted); }
+    .stat-trend { font-size: 12px; font-weight: 600; }
+    .stat-trend.up { color: var(--airtel-green); }
+    .stat-trend.down { color: var(--airtel-red); }
+
+    /* ===== BADGES / PILLS ===== */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-success { background: rgba(0,166,81,0.12); color: var(--airtel-green); }
+    .badge-danger { background: rgba(228,0,0,0.12); color: var(--airtel-red); }
+    .badge-warning { background: rgba(245,166,35,0.12); color: #B07000; }
+    .badge-info { background: rgba(0,112,192,0.12); color: var(--airtel-blue); }
+    .badge-neutral { background: rgba(90,90,122,0.1); color: var(--text-secondary); }
+
+    /* ===== FORM CONTROLS ===== */
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-control {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      color: var(--text-primary);
+      background: white;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--airtel-red);
+      box-shadow: 0 0 0 3px rgba(228,0,0,0.08);
+    }
+    select.form-control { cursor: pointer; }
+    textarea.form-control { resize: vertical; min-height: 80px; }
+
+    /* ===== TABS ===== */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .tab {
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      background: none;
+      border-left: none;
+      border-right: none;
+      border-top: none;
+    }
+    .tab:hover { color: var(--airtel-red); background: rgba(228,0,0,0.04); }
+    .tab.active { color: var(--airtel-red); border-bottom-color: var(--airtel-red); }
+
+    /* ===== ALERTS ===== */
+    .alert {
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13.5px;
+    }
+    .alert-success { background: rgba(0,166,81,0.08); border: 1px solid rgba(0,166,81,0.25); color: #005A30; }
+    .alert-danger { background: rgba(228,0,0,0.08); border: 1px solid rgba(228,0,0,0.25); color: #8B0000; }
+    .alert-info { background: rgba(0,112,192,0.08); border: 1px solid rgba(0,112,192,0.25); color: #003A6E; }
+    .alert-warning { background: rgba(245,166,35,0.08); border: 1px solid rgba(245,166,35,0.3); color: #7A4E00; }
+
+    /* ===== LOADING SPINNER ===== */
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2.5px solid rgba(228,0,0,0.2);
+      border-top-color: var(--airtel-red);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-overlay {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 32px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    .loading-overlay.show { display: flex; }
+
+    /* ===== PROGRESS BAR ===== */
+    .progress { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .progress-bar { height: 100%; border-radius: 4px; background: var(--airtel-red); transition: width 0.6s ease; }
+    .progress-bar.green { background: var(--airtel-green); }
+    .progress-bar.blue { background: var(--airtel-blue); }
+    .progress-bar.gold { background: var(--airtel-gold); }
+
+    /* ===== TABLE ===== */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    thead th {
+      background: var(--bg);
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+    tbody td { padding: 13px 16px; border-bottom: 1px solid var(--border); color: var(--text-primary); }
+    tbody tr:hover { background: rgba(228,0,0,0.025); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* ===== TOAST NOTIFICATIONS ===== */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toast {
+      background: var(--airtel-navy);
+      color: white;
+      padding: 14px 18px;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-lg);
+      font-size: 13.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.3s ease;
+      max-width: 340px;
+    }
+    .toast.success { border-left: 4px solid var(--airtel-green); }
+    .toast.error { border-left: 4px solid var(--airtel-red); }
+    .toast.warning { border-left: 4px solid var(--airtel-gold); }
+    @keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* ===== GRID HELPERS ===== */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .flex { display: flex; }
+    .flex-center { display: flex; align-items: center; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .gap-4 { gap: 16px; }
+    .mb-4 { margin-bottom: 16px; }
+    .mb-6 { margin-bottom: 24px; }
+    .mb-8 { margin-bottom: 32px; }
+    .mt-4 { margin-top: 16px; }
+    .mt-6 { margin-top: 24px; }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+    .fw-bold { font-weight: 700; }
+    .text-red { color: var(--airtel-red); }
+    .text-green { color: var(--airtel-green); }
+    .text-muted { color: var(--text-muted); }
+    .text-secondary { color: var(--text-secondary); }
+
+    /* ===== DIVIDER ===== */
+    .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1024px) {
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .page-content { padding: 16px; }
+    }
+
+    {% block extra_styles %}{% endblock %}
+  </style>
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-badge">
+        <img src="/static/images/airtel_logo.png" alt="Airtel Logo" style="width:38px;height:38px;border-radius:10px;object-fit:cover;box-shadow:0 2px 8px rgba(228,0,0,0.3);"/>
+        <div class="logo-text">
+          <div class="brand">Airtel Business</div>
+          <div class="product">Udyam Digital</div>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Platform</div>
+      <a href="/" class="nav-item {% if active_page == 'home' %}active{% endif %}">
+        <i class="fas fa-home"></i> Dashboard
+      </a>
+      <a href="/advisor" class="nav-item {% if active_page == 'advisor' %}active{% endif %}">
+        <i class="fas fa-robot"></i> AI Advisor
+        <span class="nav-badge">AI</span>
+      </a>
+      <a href="/quote" class="nav-item {% if active_page == 'quote' %}active{% endif %}">
+        <i class="fas fa-calculator"></i> Quote Builder
+      </a>
+      <div class="nav-section-label">Operations</div>
+      <a href="/kyc" class="nav-item {% if active_page == 'kyc' %}active{% endif %}">
+        <i class="fas fa-id-card"></i> Smart KYC
+        <span class="nav-badge">12</span>
+      </a>
+      <a href="/tracker" class="nav-item {% if active_page == 'tracker' %}active{% endif %}">
+        <i class="fas fa-route"></i> Order Tracker
+      </a>
+      <div class="nav-section-label">Partner Tools</div>
+      <a href="/crm" class="nav-item {% if active_page == 'crm' %}active{% endif %}">
+        <i class="fas fa-chart-line"></i> Partner CRM
+      </a>
+      <div class="nav-section-label">Resources</div>
+      <a href="/deliverables" class="nav-item {% if active_page == 'deliverables' %}active{% endif %}">
+        <i class="fas fa-download"></i> Downloads
+      </a>
+    </div>
+    <div class="sidebar-footer">
+      Airtel <span>SYNC</span> Hackathon 2026 · Track A
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <!-- TOP HEADER -->
+    <header class="top-header">
+      <div class="header-title">
+        <h1>{% block page_title %}Project Udyam Digital{% endblock %}</h1>
+        <p>{% block page_subtitle %}Airtel SYNC Hackathon 2026 · Track A — MSME Digital Onboarding Platform{% endblock %}</p>
+      </div>
+      <div class="header-actions">
+        {% block header_actions %}
+        <a href="/kyc" class="btn btn-secondary btn-sm"><i class="fas fa-id-card"></i> KYC</a>
+        <a href="/advisor" class="btn btn-primary btn-sm"><i class="fas fa-robot"></i> AI Advisor</a>
+        {% endblock %}
+      </div>
+      <img src="/static/images/airtel_logo.png" alt="Airtel Profile" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid var(--border);box-shadow:var(--shadow-sm);"/>
+    </header>
+
+    <!-- PAGE BODY -->
+    <main class="page-content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container"></div>
+
+  <script>
+    // ===== TOAST UTILITY =====
+    function showToast(message, type='info', duration=4000) {
+      const container = document.getElementById('toast-container');
+      const icons = { success: 'fa-check-circle', error: 'fa-times-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<i class="fas ${icons[type]||icons.info}"></i> <span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => { toast.style.opacity='0'; toast.style.transform='translateX(60px)'; toast.style.transition='all 0.4s'; setTimeout(()=>toast.remove(), 400); }, duration);
+    }
+
+    // ===== ACTIVE NAV HIGHLIGHT =====
+    document.querySelectorAll('.nav-item').forEach(item => {
+      if(item.href === window.location.href) item.classList.add('active');
+    });
+
+    // ===== MOBILE SIDEBAR TOGGLE =====
+    document.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape') document.getElementById('sidebar').classList.remove('open');
+    });
+  </script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

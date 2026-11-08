@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+{% set active_page = "quote" %}
+
+{% block title %}Quote Builder — Airtel Project Udyam Digital{% endblock %}
+{% block page_title %}Quote Builder{% endblock %}
+{% block page_subtitle %}Build custom MSME bundles from 25 products · Real-time GST pricing{% endblock %}
+
+{% block header_actions %}
+<button class="btn btn-secondary btn-sm" onclick="clearQuote()"><i class="fas fa-trash"></i> Clear</button>
+<button class="btn btn-primary btn-sm" onclick="placeOrder()" id="place-order-btn" disabled><i class="fas fa-shopping-cart"></i> Place Order</button>
+{% endblock %}
+
+{% block extra_styles %}
+.quote-layout { display: grid; grid-template-columns: 1fr 380px; gap: 24px; }
+.product-search-bar { display: flex; gap: 10px; margin-bottom: 16px; }
+.category-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.cat-filter {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-secondary);
+}
+.cat-filter:hover, .cat-filter.active { border-color: var(--airtel-red); color: var(--airtel-red); background: rgba(228,0,0,0.05); }
+
+.presets-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  background: white;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  align-items: center;
+}
+.preset-label { font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.preset-btn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.preset-btn:hover { border-color: var(--airtel-red); color: var(--airtel-red); background: rgba(228,0,0,0.04); }
+
+.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.product-card {
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+.product-card:hover { border-color: var(--airtel-red); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.product-card.in-cart { border-color: var(--airtel-green); background: rgba(0,166,81,0.03); }
+.product-cat-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--airtel-red); margin-bottom: 8px; }
+.product-name { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.product-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
+.product-price { font-size: 20px; font-weight: 800; color: var(--airtel-navy); }
+.product-price small { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+.product-add-btn {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  pointer-events: none;
+  transition: all 0.2s;
+}
+.product-card:hover .product-add-btn { border-color: var(--airtel-red); color: var(--airtel-red); }
+.product-card.in-cart .product-add-btn { background: var(--airtel-green); border-color: var(--airtel-green); color: white; }
+
+.cart-panel { display: flex; flex-direction: column; gap: 16px; }
+.cart-card { background: white; border-radius: var(--radius-md); border: 1px solid var(--border); overflow: hidden; }
+.cart-items { padding: 0; max-height: 240px; overflow-y: auto; }
+.cart-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+  font-size: 13px;
+}
+.cart-item:last-child { border-bottom: none; }
+.cart-item-name { flex: 1; font-weight: 600; }
+.cart-item-price { color: var(--text-secondary); font-size: 12px; white-space: nowrap; }
+.cart-remove { color: var(--text-muted); cursor: pointer; font-size: 13px; padding: 4px; }
+.cart-remove:hover { color: var(--airtel-red); }
+.cart-empty { padding: 32px; text-align: center; color: var(--text-muted); }
+.cart-empty i { font-size: 32px; margin-bottom: 8px; display: block; }
+.price-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13.5px; }
+.price-row.total { font-size: 16px; font-weight: 800; color: var(--airtel-navy); border-top: 2px solid var(--border); padding-top: 12px; margin-top: 4px; }
+.business-form { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+{% endblock %}
+
+{% block content %}
+<!-- PRESET BUNDLES BAR -->
+<div class="presets-bar">
+  <span class="preset-label"><i class="fas fa-magic" style="color:var(--airtel-red);margin-right:6px;"></i>Quick Presets:</span>
+  <button class="preset-btn" onclick="applyPreset('kirana')"><i class="fas fa-store"></i> Kirana Starter (100M+POS+WiFi)</button>
+  <button class="preset-btn" onclick="applyPreset('clinic')"><i class="fas fa-hospital"></i> Clinic Suite (300M+Cloud+Static IP)</button>
+  <button class="preset-btn" onclick="applyPreset('multisite')"><i class="fas fa-network-wired"></i> Multi-Store (300M+Failover+CCTV)</button>
+  <button class="preset-btn" onclick="applyPreset('mfg')"><i class="fas fa-industry"></i> Manufacturing (1G+Backup+IoT)</button>
+</div>
+
+<div class="quote-layout">
+  <!-- LEFT: PRODUCT CATALOG -->
+  <div>
+    <div class="product-search-bar">
+      <input type="text" class="form-control" id="product-search" placeholder="Search by name, category, or features…" oninput="filterProducts()"/>
+    </div>
+    <div class="category-filters" id="cat-filters">
+      <button class="cat-filter active" onclick="filterCat('all',this)">All Products</button>
+    </div>
+    <div class="product-grid" id="product-grid">
+      <div class="loading-overlay show"><div class="spinner"></div> Loading products…</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: CART + PRICING -->
+  <div class="cart-panel">
+    <div class="cart-card">
+      <div class="card-header">
+        <div class="card-icon icon-green"><i class="fas fa-shopping-cart"></i></div>
+        <div>
+          <h3>Your Bundle</h3>
+          <p id="cart-count">0 products selected</p>
+        </div>
+      </div>
+      <div class="cart-items" id="cart-items">
+        <div class="cart-empty"><i class="fas fa-box-open"></i>No products added yet.<br/>Click products on the left to add them.</div>
+      </div>
+    </div>
+
+    <div class="cart-card">
+      <div class="card-header">
+        <div class="card-icon icon-gold"><i class="fas fa-receipt"></i></div>
+        <div><h3>Pricing Summary</h3></div>
+      </div>
+      <div style="padding:16px;">
+        <div class="price-row"><span>Subtotal (monthly)</span><span id="price-subtotal">₹0</span></div>
+        <div class="price-row"><span>Bundle Discount (10%)</span><span id="price-discount" style="color:var(--airtel-green);">-₹0</span></div>
+        <div class="price-row"><span>Setup / Installation</span><span id="price-setup">₹0</span></div>
+        <div class="price-row"><span>GST (18%)</span><span id="price-gst">₹0</span></div>
+        <div class="price-row total"><span>Monthly Total</span><span id="price-total" class="text-red">₹0</span></div>
+        <div style="margin-top:8px;font-size:11px;color:var(--text-muted);">12-month commitment · Zero paper contract · 72h SLA</div>
+      </div>
+    </div>
+
+    <div class="cart-card">
+      <div class="card-header">
+        <div class="card-icon icon-blue"><i class="fas fa-building"></i></div>
+        <div><h3>Business Details</h3></div>
+      </div>
+      <div class="business-form">
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Business Name</label>
+          <input type="text" class="form-control" id="biz-name" placeholder="e.g. Ganesh Woodcraft Pvt Ltd" value="Ganesh Woodcraft"/>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">City</label>
+          <input type="text" class="form-control" id="biz-city" placeholder="e.g. Nagpur" value="Nagpur"/>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Mobile Number</label>
+          <input type="text" class="form-control" id="biz-phone" placeholder="10-digit mobile" value="9823019842"/>
+        </div>
+        <button class="btn btn-primary" id="place-order-btn2" onclick="placeOrder()" disabled style="width:100%;justify-content:center;padding:12px;">
+          <i class="fas fa-check-circle"></i> Confirm & Place Order
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let allProducts = [];
+let cart = [];
+let currentCat = 'all';
+
+async function loadProducts() {
+  try {
+    const r = await fetch('/api/products');
+    allProducts = await r.json();
+    buildCatFilters();
+    renderProducts();
+  } catch(e) {
+    document.getElementById('product-grid').innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Failed to load products. Is Flask running?</div>';
+  }
+}
+
+function buildCatFilters() {
+  const cats = [...new Set(allProducts.map(p => p.category))].filter(Boolean);
+  const container = document.getElementById('cat-filters');
+  container.innerHTML = '<button class="cat-filter active" onclick="filterCat(\'all\',this)">All Products</button>';
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-filter';
+    btn.textContent = cat;
+    btn.onclick = function() { filterCat(cat, this); };
+    container.appendChild(btn);
+  });
+}
+
+function filterCat(cat, btn) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-filter').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderProducts();
+}
+
+function filterProducts() {
+  renderProducts();
+}
+
+function renderProducts() {
+  const search = (document.getElementById('product-search').value||'').toLowerCase();
+  const filtered = allProducts.filter(p => {
+    const matchCat = currentCat==='all' || p.category === currentCat;
+    const matchSearch = !search || 
+      (p.name||'').toLowerCase().includes(search) || 
+      (p.description||'').toLowerCase().includes(search) ||
+      (p.product_code||'').toLowerCase().includes(search);
+    return matchCat && matchSearch;
+  });
+  const grid = document.getElementById('product-grid');
+  if(!filtered.length) { grid.innerHTML = '<div class="text-center text-muted" style="padding:32px;grid-column:1/-1;">No products found</div>'; return; }
+  grid.innerHTML = '';
+  filtered.forEach(p => {
+    const inCart = cart.some(c => c.product_code === p.product_code);
+    const card = document.createElement('div');
+    card.className = 'product-card' + (inCart ? ' in-cart' : '');
+    card.id = 'pc-' + p.product_code;
+    const price = p.monthly_inr ? '₹' + p.monthly_inr.toLocaleString() : 'Included';
+    card.innerHTML = `
+      <div class="product-cat-badge">${p.category||''}</div>
+      <div class="product-name">${p.name}</div>
+      <div class="product-desc">${(p.description||'').substring(0,85)}</div>
+      <div class="product-price">${price}<small>${p.monthly_inr?'/mo':''}</small></div>
+      <div class="product-add-btn">
+        <i class="fas ${inCart?'fa-check':'fa-plus'}"></i>
+      </div>`;
+    card.onclick = () => toggleCart(p.product_code);
+    grid.appendChild(card);
+  });
+}
+
+function toggleCart(code) {
+  const idx = cart.findIndex(c => c.product_code === code);
+  if(idx >= 0) {
+    cart.splice(idx, 1);
+  } else {
+    const p = allProducts.find(p => p.product_code === code);
+    if(p) cart.push(p);
+  }
+  renderProducts();
+  renderCart();
+  updatePricing();
+}
+
+function removeFromCart(code) {
+  cart = cart.filter(c => c.product_code !== code);
+  renderProducts();
+  renderCart();
+  updatePricing();
+}
+
+function renderCart() {
+  const container = document.getElementById('cart-items');
+  document.getElementById('cart-count').textContent = cart.length + ' product' + (cart.length!==1?'s':'') + ' selected';
+  if(!cart.length) {
+    container.innerHTML = '<div class="cart-empty"><i class="fas fa-box-open"></i>No products added yet.<br/>Click products on the left to add them.</div>';
+    document.getElementById('place-order-btn').disabled = true;
+    document.getElementById('place-order-btn2').disabled = true;
+    return;
+  }
+  container.innerHTML = '';
+  cart.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'cart-item';
+    div.innerHTML = `<span class="cart-item-name">${p.name}</span>
+      <span class="cart-item-price">${p.monthly_inr ? '₹' + p.monthly_inr.toLocaleString() + '/mo' : 'Incl.'}</span>
+      <span class="cart-remove" onclick="event.stopPropagation(); removeFromCart('${p.product_code}')" title="Remove"><i class="fas fa-times"></i></span>`;
+    container.appendChild(div);
+  });
+  document.getElementById('place-order-btn').disabled = false;
+  document.getElementById('place-order-btn2').disabled = false;
+}
+
+function updatePricing() {
+  const subtotal = cart.reduce((s,p) => s + (p.monthly_inr||0), 0);
+  const discount = cart.length >= 3 ? Math.round(subtotal * 0.10) : 0;
+  const netSubtotal = subtotal - discount;
+  const setup = cart.reduce((s,p) => s + (p.setup_fee_inr||0), 0);
+  const gst = Math.round(netSubtotal * 0.18);
+  const total = netSubtotal + gst;
+  
+  document.getElementById('price-subtotal').textContent = '₹' + subtotal.toLocaleString();
+  document.getElementById('price-discount').textContent = discount ? '-₹' + discount.toLocaleString() : '₹0';
+  document.getElementById('price-setup').textContent = setup ? '₹' + setup.toLocaleString() : 'Free';
+  document.getElementById('price-gst').textContent = '₹' + gst.toLocaleString();
+  document.getElementById('price-total').textContent = '₹' + total.toLocaleString();
+}
+
+function clearQuote() {
+  cart = [];
+  renderProducts();
+  renderCart();
+  updatePricing();
+  showToast('Quote cleared', 'info');
+}
+
+function applyPreset(type) {
+  const presets = {
+    kirana: ['P01', 'P19', 'P22'], // Biz Fibre 100 + Cloud POS + Guest WiFi
+    clinic: ['P02', 'P11', 'P17', 'P20'], // Biz Fibre 300 + Static IP + Cloud Backup + Endpoint Security
+    multisite: ['P02', 'P09', 'P23'], // Biz Fibre 300 + 4G/5G Failover + Cloud CCTV
+    mfg: ['P03', 'P17', 'P24'] // Biz Fibre 1G + Cloud Backup + Machine IoT
+  };
+  const pids = presets[type] || [];
+  cart = allProducts.filter(p => pids.includes(p.product_code));
+  renderProducts();
+  renderCart();
+  updatePricing();
+  showToast('Preset bundle applied!', 'success');
+}
+
+async function placeOrder() {
+  if(!cart.length) return showToast('Add at least one product first', 'warning');
+  const bizName = document.getElementById('biz-name').value.trim() || 'My Business Enterprise';
+  const city = document.getElementById('biz-city').value.trim() || 'Nagpur';
+  const phone = document.getElementById('biz-phone').value.trim() || '9823019842';
+  
+  const subtotal = cart.reduce((s,p) => s + (p.monthly_inr||0), 0);
+  const discount = cart.length >= 3 ? Math.round(subtotal * 0.10) : 0;
+  const netSubtotal = subtotal - discount;
+  const gst = Math.round(netSubtotal * 0.18);
+  const total = netSubtotal + gst;
+
+  const payload = {
+    business_name: bizName,
+    city: city,
+    contact_phone: phone,
+    bundle_title: cart.map(p => p.name).join(' + '),
+    total_monthly_with_gst: total,
+    setup_fee_inr: cart.reduce((s,p) => s + (p.setup_fee_inr||0), 0),
+    contract_months: 12,
+    estimated_install_days: 3
+  };
+  try {
+    showToast('Creating digital order…', 'info', 1500);
+    const r = await fetch('/api/orders/create', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const order = await r.json();
+    showToast('Order ' + order.order_id + ' confirmed!', 'success');
+    setTimeout(() => { window.location.href = '/tracker?order=' + order.order_id; }, 1200);
+  } catch(e) {
+    showToast('Order creation failed — API error', 'error');
+  }
+}
+
+loadProducts();
+</script>
+{% endblock %}

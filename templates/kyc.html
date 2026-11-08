@@ -1,0 +1,453 @@
+{% extends "base.html" %}
+{% set active_page = "kyc" %}
+
+{% block title %}Smart KYC — Airtel Project Udyam Digital{% endblock %}
+{% block page_title %}Smart KYC Engine{% endblock %}
+{% block page_subtitle %}Automated document validation with GSTIN, Udyam & governance checks across 12 test specimens{% endblock %}
+
+{% block header_actions %}
+<button class="btn btn-secondary btn-sm" onclick="loadAllSpecimens()"><i class="fas fa-sync"></i> Refresh</button>
+<button class="btn btn-primary btn-sm" onclick="goToGstinLookup()"><i class="fas fa-search"></i> GSTIN Lookup</button>
+{% endblock %}
+
+{% block extra_styles %}
+.specimen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.specimen-card {
+  background: white;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border);
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.specimen-card:hover { border-color: var(--airtel-blue); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.specimen-card.clean { border-color: rgba(0,166,81,0.4); background: rgba(0,166,81,0.025); }
+.specimen-card.dirty { border-color: rgba(228,0,0,0.3); background: rgba(228,0,0,0.025); }
+.specimen-card.selected { border-color: var(--airtel-blue); box-shadow: 0 0 0 3px rgba(0,112,192,0.15); }
+.specimen-code {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.specimen-name { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+.specimen-constitution { font-size: 11.5px; color: var(--text-secondary); margin-bottom: 10px; }
+.specimen-status-row { display: flex; align-items: center; justify-content: space-between; }
+.verify-btn {
+  background: var(--airtel-navy);
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.verify-btn:hover { background: var(--airtel-red); }
+
+.result-panel {
+  background: white;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-top: 16px;
+}
+.result-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.result-verdict { flex: 1; }
+.verdict-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.verdict-approved { background: rgba(0,166,81,0.12); color: var(--airtel-green); border: 1.5px solid rgba(0,166,81,0.3); }
+.verdict-rejected { background: rgba(228,0,0,0.12); color: var(--airtel-red); border: 1.5px solid rgba(228,0,0,0.3); }
+.verdict-pending { background: rgba(90,90,122,0.1); color: var(--text-secondary); border: 1.5px solid var(--border); }
+.check-list { list-style: none; }
+.check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13.5px;
+}
+.check-item:last-child { border-bottom: none; }
+.check-icon { margin-top: 2px; font-size: 16px; flex-shrink: 0; }
+.check-icon.pass { color: var(--airtel-green); }
+.check-icon.fail { color: var(--airtel-red); }
+.check-title { font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.check-detail { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+
+.gstin-lookup-box {
+  background: white;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  padding: 24px;
+}
+.gstin-result-card {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  margin-top: 18px;
+  border: 1px solid var(--border);
+  display: none;
+}
+.gstin-result-card.show { display: block; }
+.info-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+.info-row:last-child { border-bottom: none; }
+.info-row span:first-child { color: var(--text-secondary); font-weight: 500; }
+.info-row span:last-child { color: var(--text-primary); font-weight: 600; text-align: right; }
+
+.sample-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 12px;
+}
+.sample-chip {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+.sample-chip:hover { border-color: var(--airtel-red); color: var(--airtel-red); background: rgba(228,0,0,0.04); }
+{% endblock %}
+
+{% block content %}
+<div class="tabs">
+  <button class="tab active" id="tab-btn-specimens" onclick="switchTab('specimens', this)">12 Test Specimens</button>
+  <button class="tab" id="tab-btn-gstin" onclick="switchTab('gstin-lookup', this)">GSTIN Registry Lookup</button>
+  <button class="tab" id="tab-btn-udyam" onclick="switchTab('udyam-lookup', this)">Udyam MSME Lookup</button>
+</div>
+
+<!-- TAB 1: 12 TEST SPECIMENS -->
+<div id="tab-specimens">
+  <div class="alert alert-info mb-4">
+    <i class="fas fa-info-circle"></i>
+    <div>
+      <strong>12 KYC Test Specimens (K01–K12)</strong> — Click any specimen to run the automated inspection pipeline.
+      <strong>K03</strong> (Ganesh Woodcraft) and <strong>K12</strong> (Star Electronics) are <span style="color:var(--airtel-green);font-weight:700;">APPROVED</span>.
+      All others contain intentional defects (blur, skew, expired address proof, cancelled GST, mismatch) and will be <span style="color:var(--airtel-red);font-weight:700;">REJECTED</span>.
+    </div>
+  </div>
+
+  <div class="specimen-grid" id="specimen-grid">
+    <div class="loading-overlay show"><div class="spinner"></div> Loading specimens…</div>
+  </div>
+
+  <!-- Result Panel -->
+  <div class="result-panel" id="result-panel" style="display:none;">
+    <div class="result-header">
+      <div style="font-size:36px;" id="result-emoji">⏳</div>
+      <div class="result-verdict">
+        <div id="verdict-pill" class="verdict-pill verdict-pending">Verifying…</div>
+        <div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-top:6px;" id="result-business-name">—</div>
+        <div style="font-size:12px;color:var(--text-secondary);" id="result-gstin">—</div>
+      </div>
+      <div>
+        <span id="result-score" style="font-size:30px;font-weight:800;color:var(--airtel-navy);">—</span>
+        <div style="font-size:11px;color:var(--text-muted);text-align:right;">Trust Score</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div id="result-loading" class="loading-overlay"><div class="spinner"></div> Running automated checks…</div>
+      <ul class="check-list" id="check-list"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: GSTIN LOOKUP -->
+<div id="tab-gstin-lookup" style="display:none;">
+  <div class="gstin-lookup-box">
+    <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;"><i class="fas fa-search" style="color:var(--airtel-red);margin-right:8px;"></i>Live GSTIN Registry Verification</h3>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Searches 3,534 official GSTIN records with Mod-36 checksum, legal name & cancellation detection.</p>
+    
+    <div style="display:flex;gap:12px;">
+      <input type="text" id="gstin-input" class="form-control" placeholder="Enter 15-digit GSTIN e.g. 27XUIXG0767D1ZP" style="text-transform:uppercase;font-family:monospace;font-size:14px;letter-spacing:1px;" onkeydown="if(event.key==='Enter') lookupGSTIN();"/>
+      <button class="btn btn-primary" onclick="lookupGSTIN()"><i class="fas fa-search"></i> Verify GSTIN</button>
+    </div>
+    
+    <div class="sample-chips">
+      <span style="font-size:12px;font-weight:600;color:var(--text-muted);">Quick Samples:</span>
+      <button class="sample-chip" onclick="fillAndLookupGstin('27XUIXG0767D1ZP')">✅ K03 Ganesh Woodcraft (Active)</button>
+      <button class="sample-chip" onclick="fillAndLookupGstin('37NBLXS1145E1ZU')">✅ K12 Star Electronics (Active)</button>
+      <button class="sample-chip" onclick="fillAndLookupGstin('37IHKXV5167L1ZS')">❌ K01 Vindhya Tours (Cancelled)</button>
+    </div>
+
+    <div class="gstin-result-card" id="gstin-result-card"></div>
+  </div>
+</div>
+
+<!-- TAB 3: UDYAM LOOKUP -->
+<div id="tab-udyam-lookup" style="display:none;">
+  <div class="gstin-lookup-box">
+    <h3 style="font-size:16px;font-weight:700;margin-bottom:8px;"><i class="fas fa-certificate" style="color:var(--airtel-red);margin-right:8px;"></i>Udyam MSME Registry Verification</h3>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Searches 2,723 MSME certificates for enterprise classification (Micro/Small/Medium) & active status.</p>
+    
+    <div style="display:flex;gap:12px;">
+      <input type="text" id="udyam-input" class="form-control" placeholder="Enter Udyam e.g. UDYAM-MH-00-9516696" style="text-transform:uppercase;font-family:monospace;font-size:14px;letter-spacing:1px;" onkeydown="if(event.key==='Enter') lookupUdyam();"/>
+      <button class="btn btn-primary" onclick="lookupUdyam()"><i class="fas fa-search"></i> Verify Udyam</button>
+    </div>
+    
+    <div class="sample-chips">
+      <span style="font-size:12px;font-weight:600;color:var(--text-muted);">Quick Samples:</span>
+      <button class="sample-chip" onclick="fillAndLookupUdyam('UDYAM-MH-00-9516696')">✅ K03 Ganesh Woodcraft</button>
+      <button class="sample-chip" onclick="fillAndLookupUdyam('UDYAM-AP-00-5186772')">✅ K12 Star Electronics</button>
+    </div>
+
+    <div class="gstin-result-card" id="udyam-result-card"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let selectedCode = null;
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const target = document.getElementById('tab-' + tab);
+  if(target) target.style.display = 'block';
+  if(btn) btn.classList.add('active');
+}
+
+function goToGstinLookup() {
+  switchTab('gstin-lookup', document.getElementById('tab-btn-gstin'));
+  setTimeout(() => {
+    const input = document.getElementById('gstin-input');
+    if(input) input.focus();
+  }, 100);
+}
+
+function fillAndLookupGstin(gstin) {
+  const input = document.getElementById('gstin-input');
+  input.value = gstin;
+  lookupGSTIN();
+}
+
+function fillAndLookupUdyam(udyam) {
+  const input = document.getElementById('udyam-input');
+  input.value = udyam;
+  lookupUdyam();
+}
+
+async function loadAllSpecimens() {
+  const grid = document.getElementById('specimen-grid');
+  grid.innerHTML = '<div class="loading-overlay show"><div class="spinner"></div> Loading specimens…</div>';
+  try {
+    const r = await fetch('/api/kyc/specimens');
+    const specimens = await r.json();
+    grid.innerHTML = '';
+    specimens.forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'specimen-card ' + (s.is_clean ? 'clean' : 'dirty');
+      card.id = 'card-' + s.code;
+      card.innerHTML = `
+        <div class="specimen-code">${s.code}</div>
+        <div class="specimen-name">${s.business_name}</div>
+        <div class="specimen-constitution">${s.constitution}</div>
+        <div class="specimen-status-row">
+          <span class="badge ${s.is_clean ? 'badge-success' : 'badge-danger'}">
+            <i class="fas ${s.is_clean ? 'fa-check' : 'fa-times'}"></i>
+            ${s.is_clean ? 'Clean (Approved)' : s.known_issues_count + ' Issue' + (s.known_issues_count!==1?'s':'')}
+          </span>
+          <button class="verify-btn" onclick="verifySpecimen('${s.code}',event)"><i class="fas fa-play"></i> Verify</button>
+        </div>`;
+      card.onclick = () => verifySpecimen(s.code);
+      grid.appendChild(card);
+    });
+  } catch(e) {
+    grid.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Failed to load specimens. Is Flask running?</div>';
+  }
+}
+
+async function verifySpecimen(code, evt) {
+  if(evt && evt.stopPropagation) evt.stopPropagation();
+  document.querySelectorAll('.specimen-card').forEach(c => c.classList.remove('selected'));
+  const card = document.getElementById('card-' + code);
+  if(card) card.classList.add('selected');
+  selectedCode = code;
+
+  const panel = document.getElementById('result-panel');
+  panel.style.display = 'block';
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+  document.getElementById('result-emoji').textContent = '⏳';
+  document.getElementById('verdict-pill').className = 'verdict-pill verdict-pending';
+  document.getElementById('verdict-pill').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying…';
+  document.getElementById('result-business-name').textContent = code;
+  document.getElementById('result-gstin').textContent = 'Running KYC inspection…';
+  document.getElementById('result-score').textContent = '—';
+  document.getElementById('result-loading').classList.add('show');
+  document.getElementById('check-list').innerHTML = '';
+
+  try {
+    const r = await fetch('/api/kyc/verify-specimen', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({applicant_code: code})
+    });
+    const data = await r.json();
+    document.getElementById('result-loading').classList.remove('show');
+
+    const approved = (data.overall_status === 'APPROVED' || data.overall_result === 'APPROVED');
+    document.getElementById('result-emoji').textContent = approved ? '✅' : '❌';
+    document.getElementById('verdict-pill').className = 'verdict-pill ' + (approved ? 'verdict-approved' : 'verdict-rejected');
+    document.getElementById('verdict-pill').innerHTML = `<i class="fas ${approved?'fa-check-circle':'fa-times-circle'}"></i> ${data.overall_status||data.overall_result}`;
+    document.getElementById('result-business-name').textContent = data.business_name || code;
+    document.getElementById('result-gstin').textContent = 'GSTIN: ' + (data.masked_gstin || data.gstin || 'N/A') + ' · ' + (data.constitution || '');
+    document.getElementById('result-score').textContent = (data.trust_score||0) + '%';
+    document.getElementById('result-score').style.color = approved ? 'var(--airtel-green)' : 'var(--airtel-red)';
+
+    const list = document.getElementById('check-list');
+    const checks = data.checks || [];
+    if(checks.length === 0) {
+      list.innerHTML = '<li class="check-item"><span class="check-icon pass fas fa-check"></span><div><div class="check-title">All checks passed</div></div></li>';
+    } else {
+      checks.forEach(c => {
+        const passed = c.passed !== false;
+        const li = document.createElement('li');
+        li.className = 'check-item';
+        li.innerHTML = `
+          <span class="check-icon ${passed?'pass':'fail'} fas ${passed?'fa-check-circle':'fa-times-circle'}"></span>
+          <div>
+            <div class="check-title">${c.check_name || c.rule || 'KYC Check'}</div>
+            <div class="check-detail">${c.detail || ''}</div>
+          </div>`;
+        list.appendChild(li);
+      });
+    }
+
+    const issues = data.issues || data.known_issues || [];
+    if(issues.length > 0) {
+      issues.forEach(issue => {
+        const li = document.createElement('li');
+        li.className = 'check-item';
+        li.innerHTML = `<span class="check-icon fail fas fa-exclamation-triangle"></span><div><div class="check-title" style="color:var(--airtel-red);">Flagged Defect</div><div class="check-detail">${issue}</div></div>`;
+        list.appendChild(li);
+      });
+    }
+
+    showToast(approved ? `✅ ${code} APPROVED — KYC passed all checks` : `❌ ${code} REJECTED — ${(issues)[0]}`, approved?'success':'error');
+  } catch(e) {
+    document.getElementById('result-loading').classList.remove('show');
+    document.getElementById('check-list').innerHTML = '<li class="check-item"><span class="check-icon fail fas fa-times-circle"></span><div class="check-title">API Error</div></li>';
+    showToast('API error — make sure Flask server is running', 'error');
+  }
+}
+
+async function lookupGSTIN() {
+  const input = document.getElementById('gstin-input');
+  const gstin = (input.value || '').trim().toUpperCase();
+  if(!gstin) return showToast('Please enter a GSTIN number', 'warning');
+  
+  const card = document.getElementById('gstin-result-card');
+  card.innerHTML = '<div class="loading-overlay show"><div class="spinner"></div> Checking official GSTIN registry…</div>';
+  card.classList.add('show');
+  
+  try {
+    const r = await fetch('/api/kyc/lookup-gstin', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({gstin})
+    });
+    const data = await r.json();
+    if(data.found) {
+      const rec = data.record || data;
+      const isActive = (rec.status || '').toLowerCase() === 'active';
+      card.innerHTML = `
+        <div class="flex-center gap-2 mb-4">
+          <span class="badge ${isActive ? 'badge-success' : 'badge-danger'}">
+            <i class="fas ${isActive ? 'fa-check-circle' : 'fa-times-circle'}"></i> GST Status: ${rec.status || 'Unknown'}
+          </span>
+          <span class="badge badge-info"><i class="fas fa-shield-alt"></i> Mod-36 Verified</span>
+        </div>
+        <div class="info-row"><span>GSTIN</span><span style="font-family:monospace;letter-spacing:1px;">${rec.gstin}</span></div>
+        <div class="info-row"><span>Legal Entity Name</span><span>${rec.legal_name || '—'}</span></div>
+        <div class="info-row"><span>Trade Name</span><span>${rec.trade_name || '—'}</span></div>
+        <div class="info-row"><span>Constitution of Business</span><span>${rec.constitution || '—'}</span></div>
+        <div class="info-row"><span>Principal Place of Business</span><span>${rec.address || '—'}</span></div>
+        <div class="info-row"><span>State Jurisdiction</span><span>${rec.state || '—'}</span></div>
+        <div class="info-row"><span>Registration Date</span><span>${rec.registration_date || '—'}</span></div>`;
+      showToast(isActive ? '✅ Active GSTIN verified in registry!' : '⚠️ GSTIN found but status is ' + rec.status, isActive ? 'success' : 'warning');
+    } else {
+      card.innerHTML = `<div class="alert alert-danger"><i class="fas fa-times-circle"></i> GSTIN <strong>${gstin}</strong> not found in official mock registry. ${data.message||''}</div>`;
+      showToast('GSTIN not found in registry', 'error');
+    }
+  } catch(e) {
+    card.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> API error connecting to server.</div>';
+  }
+}
+
+async function lookupUdyam() {
+  const input = document.getElementById('udyam-input');
+  const udyam = (input.value || '').trim().toUpperCase();
+  if(!udyam) return showToast('Please enter an Udyam registration number', 'warning');
+
+  const card = document.getElementById('udyam-result-card');
+  card.innerHTML = '<div class="loading-overlay show"><div class="spinner"></div> Querying Udyam MSME Registry…</div>';
+  card.classList.add('show');
+  
+  try {
+    const r = await fetch('/api/kyc/lookup-udyam', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({udyam})
+    });
+    const data = await r.json();
+    if(data.found) {
+      const rec = data.record || data;
+      card.innerHTML = `
+        <div class="flex-center gap-2 mb-4">
+          <span class="badge badge-success"><i class="fas fa-certificate"></i> Verified MSME Registration</span>
+          <span class="badge badge-info">${rec.enterprise_type || rec.category || 'Micro'} Enterprise</span>
+        </div>
+        <div class="info-row"><span>Udyam Number</span><span style="font-family:monospace;letter-spacing:1px;">${rec.udyam_number || udyam}</span></div>
+        <div class="info-row"><span>Enterprise Name</span><span>${rec.enterprise_name || rec.business_name || '—'}</span></div>
+        <div class="info-row"><span>Classification Type</span><span>${rec.enterprise_type || rec.category || '—'}</span></div>
+        <div class="info-row"><span>Major Activity</span><span>${rec.major_activity || '—'}</span></div>
+        <div class="info-row"><span>NIC Activity Description</span><span>${rec.nic_description || '—'}</span></div>
+        <div class="info-row"><span>Location</span><span>${rec.city || ''}${rec.city && rec.state ? ', ' : ''}${rec.state || ''}</span></div>
+        <div class="info-row"><span>Registration Date</span><span>${rec.date_of_registration || '—'}</span></div>`;
+      showToast('✅ MSME certificate verified!', 'success');
+    } else {
+      card.innerHTML = `<div class="alert alert-danger"><i class="fas fa-times-circle"></i> Udyam Registration <strong>${udyam}</strong> not found. ${data.message||''}</div>`;
+      showToast('Udyam registration not found', 'error');
+    }
+  } catch(e) {
+    card.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> API error connecting to server.</div>';
+  }
+}
+
+// Load on page load
+loadAllSpecimens();
+</script>
+{% endblock %}

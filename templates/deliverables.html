@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% set active_page = "deliverables" %}
+
+{% block title %}Downloads — Airtel Project Udyam Digital{% endblock %}
+{% block page_title %}Deliverables & Downloads{% endblock %}
+{% block page_subtitle %}All hackathon submission artifacts · Documents · Source code{% endblock %}
+
+{% block extra_styles %}
+.download-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.download-card {
+  background: white;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s;
+}
+.download-card:hover { border-color: var(--airtel-red); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.dl-icon { font-size: 36px; }
+.dl-title { font-size: 17px; font-weight: 700; color: var(--text-primary); }
+.dl-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; flex: 1; }
+.dl-meta { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+.dl-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 20px;
+  background: var(--airtel-red);
+  color: white;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+.dl-btn:hover { background: var(--airtel-red-dark); transform: translateY(-1px); }
+.dl-btn.secondary { background: white; color: var(--airtel-navy); border: 1.5px solid var(--border); }
+.dl-btn.secondary:hover { border-color: var(--airtel-red); color: var(--airtel-red); }
+.arch-diagram {
+  background: var(--airtel-navy);
+  color: white;
+  border-radius: var(--radius-md);
+  padding: 32px;
+  margin-top: 24px;
+}
+.arch-diagram h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: white; }
+.arch-flow { display: flex; align-items: center; gap: 0; flex-wrap: wrap; }
+.arch-node {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  text-align: center;
+  min-width: 100px;
+}
+.arch-arrow { color: rgba(255,255,255,0.4); font-size: 20px; padding: 0 8px; }
+.track-badge {
+  display: inline-block;
+  background: var(--airtel-gold);
+  color: var(--airtel-navy);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-left: 8px;
+}
+{% endblock %}
+
+{% block content %}
+<!-- SUBMISSION INFO BANNER -->
+<div style="background:linear-gradient(135deg,var(--airtel-navy),#2a1a3a);border-radius:var(--radius-lg);padding:28px 36px;color:white;margin-bottom:28px;display:flex;align-items:center;gap:24px;">
+  <img src="/static/images/airtel_logo.png" alt="Airtel Logo" style="width:58px;height:58px;border-radius:14px;box-shadow:0 4px 16px rgba(228,0,0,0.4);flex-shrink:0;"/>
+  <div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--airtel-gold);margin-bottom:6px;">AIRTEL SYNC HACKATHON 2026</div>
+    <div style="font-size:22px;font-weight:800;margin-bottom:4px;">Project Udyam Digital <span class="track-badge">Track A</span></div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.65);">AI-first MSME digital onboarding · Smart KYC · Multilingual Advisor · ML Propensity Engine</div>
+  </div>
+</div>
+
+<div class="download-grid">
+  <div class="download-card">
+    <div class="dl-icon">📦</div>
+    <div class="dl-title">Full Project ZIP</div>
+    <div class="dl-desc">Complete source code — Flask backend, all 8 templates, services, ML model, KYC pipeline, 25 products, 5000 leads CSV & all 47 KYC PNGs.</div>
+    <div class="dl-meta"><i class="fas fa-file-archive" style="color:#F5A623;"></i> ZIP · ~8MB · 70+ files</div>
+    <a href="/api/download/zip" class="dl-btn"><i class="fas fa-download"></i> Download ZIP</a>
+  </div>
+
+  <div class="download-card">
+    <div class="dl-icon">🔒</div>
+    <div class="dl-title">DPDP Compliance Whitepaper</div>
+    <div class="dl-desc">Digital Personal Data Protection Act 2023 — data principal consent, field-level encryption, PII masking & data retention policies.</div>
+    <div class="dl-meta"><i class="fas fa-file-alt" style="color:var(--airtel-blue);"></i> Markdown · Privacy policy</div>
+    <button class="dl-btn secondary" onclick="openDoc('dpdp')"><i class="fas fa-eye"></i> View Document</button>
+  </div>
+
+  <div class="download-card">
+    <div class="dl-icon">🏗️</div>
+    <div class="dl-title">Solution Architecture</div>
+    <div class="dl-desc">System architecture diagram — Flask API layer, React-ready frontend, ML propensity engine, KYC validator, CRM service & deployment notes.</div>
+    <div class="dl-meta"><i class="fas fa-file-alt" style="color:var(--airtel-green);"></i> Markdown · Architecture doc</div>
+    <button class="dl-btn secondary" onclick="openDoc('architecture')"><i class="fas fa-eye"></i> View Document</button>
+  </div>
+
+  <div class="download-card">
+    <div class="dl-icon">🤖</div>
+    <div class="dl-title">ML Model — Propensity Scoring</div>
+    <div class="dl-desc">Random Forest classifier trained on 5,000 SMB leads. Features: segment, city, industry, revenue band, digital maturity. ROC AUC: 0.645.</div>
+    <div class="dl-meta"><i class="fas fa-brain" style="color:#6400C8;"></i> PKL · scikit-learn 1.x</div>
+    <div style="background:var(--bg);border-radius:var(--radius-sm);padding:12px;font-size:12px;color:var(--text-secondary);">
+      Model file at <code>models/propensity_model.pkl</code> — load with <code>pickle.load()</code>
+    </div>
+  </div>
+
+  <div class="download-card">
+    <div class="dl-icon">📋</div>
+    <div class="dl-title">Run Guide</div>
+    <div class="dl-desc">Step-by-step instructions to run the project locally on Windows/Mac/Linux using VS Code. Python 3.9+, pip install, flask run.</div>
+    <div class="dl-meta"><i class="fas fa-terminal" style="color:var(--airtel-navy);"></i> Markdown · Setup guide</div>
+    <button class="dl-btn secondary" onclick="openDoc('runguide')"><i class="fas fa-eye"></i> View Guide</button>
+  </div>
+</div>
+
+<!-- ARCHITECTURE DIAGRAM -->
+<div class="arch-diagram">
+  <h3><i class="fas fa-sitemap" style="color:var(--airtel-gold);margin-right:10px;"></i>System Architecture</h3>
+  <div class="arch-flow">
+    <div class="arch-node">🌐 Browser<br/><small>Multi-page UI</small></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-node">🐍 Flask<br/><small>API Layer</small></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-node">🤖 Advisor<br/><small>Bundle Engine</small></div>
+    <div class="arch-arrow">+</div>
+    <div class="arch-node">🛡️ KYC<br/><small>Validator</small></div>
+    <div class="arch-arrow">+</div>
+    <div class="arch-node">📊 CRM<br/><small>ML Scoring</small></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-node">💾 Data<br/><small>CSV + PKL</small></div>
+  </div>
+  <div style="margin-top:16px;font-size:12px;color:rgba(255,255,255,0.4);">
+    Tech Stack: Python 3.14 · Flask 3.x · scikit-learn · pandas · Pillow · Web Speech API · Font Awesome 6
+  </div>
+</div>
+
+<!-- DOC VIEWER MODAL -->
+<div id="doc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:none;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:var(--radius-lg);width:90%;max-width:800px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+      <h3 id="modal-title" style="flex:1;font-size:16px;"></h3>
+      <button onclick="closeModal()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-muted);">✕</button>
+    </div>
+    <div id="modal-body" style="flex:1;overflow-y:auto;padding:24px;font-size:14px;line-height:1.7;white-space:pre-wrap;font-family:monospace;"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const docPaths = {
+  dpdp: 'DPDP_Privacy_and_Security_Note.md',
+  architecture: 'Solution_Architecture.md',
+  runguide: 'RUN_GUIDE.md'
+};
+const docTitles = {
+  dpdp: 'DPDP Act 2023 Compliance Whitepaper',
+  architecture: 'Solution Architecture Document',
+  runguide: 'Run Guide — Setup Instructions'
+};
+
+async function openDoc(type) {
+  const modal = document.getElementById('doc-modal');
+  document.getElementById('modal-title').textContent = docTitles[type]||type;
+  document.getElementById('modal-body').textContent = 'Loading…';
+  modal.style.display = 'flex';
+  try {
+    const r = await fetch('/api/docs/' + docPaths[type]);
+    if(r.ok) {
+      const text = await r.text();
+      document.getElementById('modal-body').textContent = text;
+    } else {
+      document.getElementById('modal-body').textContent = 'Document not available via API. Find it in docs/ folder of the project ZIP.';
+    }
+  } catch(e) {
+    document.getElementById('modal-body').textContent = 'Find this document in the docs/ folder of the project ZIP download.';
+  }
+}
+
+function closeModal() {
+  document.getElementById('doc-modal').style.display='none';
+}
+document.getElementById('doc-modal').addEventListener('click', function(e) {
+  if(e.target===this) closeModal();
+});
+</script>
+{% endblock %}

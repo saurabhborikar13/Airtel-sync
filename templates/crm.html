@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% set active_page = "crm" %}
+
+{% block title %}Partner CRM — Airtel Project Udyam Digital{% endblock %}
+{% block page_title %}Partner CRM & ML Analytics{% endblock %}
+{% block page_subtitle %}5,000 SMB leads scored by Random Forest propensity model{% endblock %}
+
+{% block header_actions %}
+<input type="text" class="form-control" id="lead-search" placeholder="Search leads…" style="width:200px;padding:7px 12px;font-size:13px;" oninput="filterLeads()"/>
+<button class="btn btn-primary btn-sm" onclick="loadLeads()"><i class="fas fa-sync"></i> Refresh</button>
+{% endblock %}
+
+{% block extra_styles %}
+.funnel-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.funnel-label { font-size: 13px; font-weight: 600; color: var(--text-primary); width: 100px; flex-shrink: 0; }
+.funnel-track { flex: 1; height: 28px; background: var(--border); border-radius: 6px; overflow: hidden; }
+.funnel-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 10px; color: white; font-size: 12px; font-weight: 700; transition: width 1s ease; }
+.funnel-num { font-size: 13px; font-weight: 700; color: var(--text-primary); width: 60px; text-align: right; flex-shrink: 0; }
+.propensity-high { color: var(--airtel-green); font-weight: 700; }
+.propensity-medium { color: var(--airtel-gold); font-weight: 700; }
+.propensity-low { color: var(--airtel-red); font-weight: 600; }
+.action-badge {
+  background: rgba(0,112,192,0.1);
+  color: var(--airtel-blue);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.filter-row { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; }
+{% endblock %}
+
+{% block content %}
+<!-- STAT CARDS -->
+<div class="stat-grid" id="crm-stats">
+  <div class="stat-card"><div class="stat-label">Total Leads</div><div class="stat-value" id="st-total">—</div><div class="stat-sub">In pipeline</div></div>
+  <div class="stat-card green"><div class="stat-label">Activated</div><div class="stat-value" id="st-active">—</div><div class="stat-sub">Converted</div></div>
+  <div class="stat-card blue"><div class="stat-label">KYC Complete</div><div class="stat-value" id="st-kyc">—</div><div class="stat-sub">Docs verified</div></div>
+  <div class="stat-card gold"><div class="stat-label">Conversion Rate</div><div class="stat-value" id="st-conv">—</div><div class="stat-sub">From total leads</div></div>
+</div>
+
+<div class="grid-2 mb-6">
+  <!-- FUNNEL -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon icon-blue"><i class="fas fa-filter"></i></div>
+      <div><h3>Sales Funnel</h3><p>Lead stage breakdown</p></div>
+    </div>
+    <div class="card-body" id="funnel-chart">
+      <div class="loading-overlay show"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- SEGMENT DISTRIBUTION -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon icon-gold"><i class="fas fa-chart-pie"></i></div>
+      <div><h3>Segment Distribution</h3><p>By business type & size</p></div>
+    </div>
+    <div class="card-body" id="segment-chart">
+      <div class="loading-overlay show"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- LEADS TABLE -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon icon-navy"><i class="fas fa-table"></i></div>
+    <div><h3>Lead Database</h3><p id="leads-count">Loading…</p></div>
+  </div>
+  <div style="padding:16px 20px;border-bottom:1px solid var(--border);">
+    <div class="filter-row">
+      <select class="form-control" id="filter-stage" style="width:160px;" onchange="filterLeads()">
+        <option value="">All Stages</option>
+        <option value="Activated">Activated</option>
+        <option value="KYC Complete">KYC Complete</option>
+        <option value="Proposal Sent">Proposal Sent</option>
+        <option value="Cold">Cold</option>
+      </select>
+      <select class="form-control" id="filter-segment" style="width:160px;" onchange="filterLeads()">
+        <option value="">All Segments</option>
+        <option value="Micro">Micro</option>
+        <option value="Small">Small</option>
+        <option value="Medium">Medium</option>
+      </select>
+      <select class="form-control" id="filter-propensity" style="width:160px;" onchange="filterLeads()">
+        <option value="">All Propensity</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Business</th>
+          <th>City</th>
+          <th>Segment</th>
+          <th>Industry</th>
+          <th>Stage</th>
+          <th>Propensity</th>
+          <th>Next Action</th>
+        </tr>
+      </thead>
+      <tbody id="leads-table-body">
+        <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted);"><div class="spinner" style="margin:0 auto;"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let allLeads = [];
+let funnelData = null;
+
+async function loadFunnel() {
+  try {
+    const r = await fetch('/api/crm/funnel');
+    funnelData = await r.json();
+    document.getElementById('st-total').textContent = (funnelData.total_leads||0).toLocaleString();
+    document.getElementById('st-active').textContent = (funnelData.activated||0).toLocaleString();
+    document.getElementById('st-kyc').textContent = (funnelData.kyc_complete||0).toLocaleString();
+    const conv = funnelData.total_leads ? ((funnelData.activated/funnelData.total_leads)*100).toFixed(1)+'%' : '—';
+    document.getElementById('st-conv').textContent = conv;
+
+    // Render funnel bars
+    const stages = funnelData.stages || [];
+    const total = funnelData.total_leads || 1;
+    const colors = ['#E40000','#B30000','#F5A623','#0070C0','#00A651'];
+    const funnel = document.getElementById('funnel-chart');
+    if(!stages.length) { funnel.innerHTML = '<p class="text-muted text-center">No funnel data</p>'; return; }
+    funnel.innerHTML = '';
+    stages.forEach((s,i) => {
+      const pct = Math.max(5, Math.round((s.count/total)*100));
+      const div = document.createElement('div');
+      div.className = 'funnel-bar';
+      div.innerHTML = `<div class="funnel-label">${s.stage}</div>
+        <div class="funnel-track"><div class="funnel-fill" style="width:${pct}%;background:${colors[i%colors.length]};">${pct}%</div></div>
+        <div class="funnel-num">${s.count.toLocaleString()}</div>`;
+      funnel.appendChild(div);
+    });
+
+    // Render segment chart
+    const segs = funnelData.segments || {};
+    const segEl = document.getElementById('segment-chart');
+    segEl.innerHTML = '';
+    Object.entries(segs).forEach(([seg,cnt]) => {
+      const pct = Math.max(5, Math.round((cnt/total)*100));
+      const div = document.createElement('div');
+      div.className = 'funnel-bar';
+      div.innerHTML = `<div class="funnel-label">${seg}</div>
+        <div class="funnel-track"><div class="funnel-fill" style="width:${pct}%;background:var(--airtel-blue);">${pct}%</div></div>
+        <div class="funnel-num">${cnt.toLocaleString()}</div>`;
+      segEl.appendChild(div);
+    });
+  } catch(e) {
+    document.getElementById('funnel-chart').innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> API error</div>';
+  }
+}
+
+async function loadLeads() {
+  const tbody = document.getElementById('leads-table-body');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;"><div class="spinner" style="margin:0 auto;"></div></td></tr>';
+  try {
+    const r = await fetch('/api/crm/leads?limit=100');
+    allLeads = await r.json();
+    renderLeads(allLeads);
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding:24px;color:var(--airtel-red);">API error — ensure Flask is running</td></tr>';
+  }
+}
+
+function filterLeads() {
+  const search = (document.getElementById('lead-search').value||'').toLowerCase();
+  const stage = document.getElementById('filter-stage').value;
+  const segment = document.getElementById('filter-segment').value;
+  const propensity = document.getElementById('filter-propensity').value;
+  const filtered = allLeads.filter(l => {
+    if(stage && (l.stage||'')!==stage) return false;
+    if(segment && (l.segment||'')!==segment) return false;
+    if(propensity && (l.propensity_label||'')!==propensity) return false;
+    if(search && !(JSON.stringify(l).toLowerCase().includes(search))) return false;
+    return true;
+  });
+  renderLeads(filtered);
+}
+
+function renderLeads(leads) {
+  document.getElementById('leads-count').textContent = leads.length.toLocaleString() + ' leads shown';
+  const tbody = document.getElementById('leads-table-body');
+  if(!leads.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding:24px;color:var(--text-muted);">No leads match your filters</td></tr>'; return; }
+  tbody.innerHTML = '';
+  leads.slice(0,100).forEach(l => {
+    const propCls = l.propensity_label==='High'?'propensity-high':l.propensity_label==='Medium'?'propensity-medium':'propensity-low';
+    const stageBadge = l.stage==='Activated'?'badge-success':l.stage==='KYC Complete'?'badge-info':l.stage==='Proposal Sent'?'badge-warning':'badge-neutral';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div style="font-weight:600;font-size:13px;">${(l.business_name||'—').substring(0,25)}</div><div style="font-size:11px;color:var(--text-muted);">${l.contact_person||''}</div></td>
+      <td>${l.city||'—'}</td>
+      <td><span class="badge badge-info">${l.segment||'—'}</span></td>
+      <td style="font-size:12px;">${l.industry||'—'}</td>
+      <td><span class="badge ${stageBadge}">${l.stage||'—'}</span></td>
+      <td><span class="${propCls}">${l.propensity_label||'—'}</span></td>
+      <td><span class="action-badge">${(l.next_action||'Follow up').substring(0,22)}</span></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+loadFunnel();
+loadLeads();
+</script>
+{% endblock %}
