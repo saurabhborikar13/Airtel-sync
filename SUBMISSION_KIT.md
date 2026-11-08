@@ -1,21 +1,22 @@
 # Airtel SYNC Hackathon 2026 · Track A: Project Udyam Digital
 ## Final Submission Kit
 
-### 1. Prototype Demo Video
-- **Drive Link:** [https://drive.google.com/file/d/1TwcPl2c8KbH7sJIPwkrbOD9QJjv4vQ7D/view?usp=drive_link](https://drive.google.com/file/d/1TwcPl2c8KbH7sJIPwkrbOD9QJjv4vQ7D/view?usp=drive_link)
-*(Please ensure Google Drive access is set to "Anyone with the link can view")*
+### 1. Prototype Demo Video & Source Code Links
+- **Demo Video (Google Drive):** [https://drive.google.com/file/d/1TwcPl2c8KbH7sJIPwkrbOD9QJjv4vQ7D/view?usp=drive_link](https://drive.google.com/file/d/1TwcPl2c8KbH7sJIPwkrbOD9QJjv4vQ7D/view?usp=drive_link)
+  *(Google Drive access: "Anyone with the link can view")*
+- **GitHub Repository:** [https://github.com/saurabhborikar13/Airtel-sync](https://github.com/saurabhborikar13/Airtel-sync)
 
 ---
 
-### 2. Submission Deliverables Summary (Per Case Study Requirements)
+### 2. Submission Deliverables Summary (Portal Upload Requirements)
 
-| # | Required Deliverable | File in Repository / Workspace | Status |
-|---|---|---|---|
-| **1** | **Working Prototype Code** | `Project_Udyam_Digital_Airtel_SYNC.zip` | Ready (7.95 MB) |
-| **2** | **Demo Video Link** | Drive Link above | Ready (< 3 mins) |
-| **3** | **Business Case Presentation** | `Business_Case_Presentation.pptx` | Ready (10 Slides, Official Branding) |
-| **4** | **Solution Architecture** | `docs/Solution_Architecture.md` | Ready |
-| **5** | **DPDP Privacy & Security Note** | `docs/DPDP_Privacy_and_Security_Note.md` | Ready |
+| # | Required Deliverable | Format | File Name & Location | Status |
+|---|---|:---:|---|---|
+| **1** | **7-Slider Submission Document (PDF)** | **PDF** | `Project_Udyam_Digital_7_Slides.pdf` | Ready (4.56 MB, < 20 MB) |
+| **2** | **7-Slider Submission Document (PPT)** | **PPTX** | `Project_Udyam_Digital_7_Slides.pptx` | Ready (91.9 KB, < 20 MB) |
+| **3** | **GitHub Repository Link** | **URL** | `https://github.com/saurabhborikar13/Airtel-sync` | Public Repository |
+| **4** | **Demo Video Link** | **URL** | Google Drive link above | Active Link |
+| **5** | **Working Prototype Codebase** | **ZIP** | `Project_Udyam_Digital_Airtel_SYNC.zip` | Ready (16.2 MB) |
 
 ---
 
